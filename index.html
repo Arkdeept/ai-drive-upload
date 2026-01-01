@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; display: flex; justify-content: center; padding: 50px; background-color: #f0f2f5; }
+    form { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 350px; }
+    h2 { margin-top: 0; color: #333; }
+    input, textarea, button { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    textarea { height: 80px; resize: vertical; }
+    button { background-color: #673AB7; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+    button:hover { background-color: #5e35b1; }
+    #ai-result { margin-top: 15px; padding: 10px; background: #e1bee7; border-radius: 6px; display: none; color: #4a148c; font-size: 0.9em; }
+  </style>
+</head>
+<body>
 
+<form id="uploadForm">
+  <h2>AI Smart Upload</h2>
+  <input type="text" id="name" placeholder="Your Name" required>
+  <input type="email" id="email" placeholder="Your Email" required>
+  <textarea id="message" placeholder="Describe this file (The AI will summarize this)..."></textarea>
+  <input type="file" id="file" required>
+  <button type="submit" id="submitBtn">Upload & Analyze</button>
+  <div id="ai-result"></div>
+</form>
+
+<script>
+  // PASTE YOUR NEW WEB APP URL HERE
+  const scriptURL = 'AIzaSyAWiAGafxuLfK-ANOBoLIfsjVQBltyIp68'; 
+
+  document.getElementById('uploadForm').addEventListener('submit', e => {
+    e.preventDefault();
+    
+    const resultBox = document.getElementById('ai-result');
+    const submitBtn = document.getElementById('submitBtn');
+    const fileInput = document.getElementById('file');
+    const reader = new FileReader();
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "AI is thinking...";
+    resultBox.style.display = "none";
+
+    reader.readAsDataURL(fileInput.files[0]);
+    reader.onload = function() {
+      const payload = {
+        filename: fileInput.files[0].name,
+        mimeType: fileInput.files[0].type,
+        file: reader.result,
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        message: document.getElementById('message').value // Sending text for AI
+      };
+
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.status === 'success'){
+            // Show the AI's response on the website
+            resultBox.style.display = "block";
+            resultBox.innerHTML = "<strong>✅ Success!</strong><br>AI Summary: " + data.aiSummary;
+            document.getElementById('uploadForm').reset();
+        } else {
+            alert("Error: " + data.message);
+        }
+      })
+      .catch(error => console.error('Error!', error.message))
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Upload & Analyze";
+      });
+    };
+  });
+</script>
+
+</body>
+</html>
